@@ -833,7 +833,10 @@ long _mindot_large(const float *vv, const float *vec, unsigned long count, float
 #define ARM_NEON_GCC_COMPATIBILITY 1
 #include <arm_neon.h>
 #include <sys/types.h>
+
+#ifndef BT_HAS_NEON_HPFP
 #include <sys/sysctl.h>  //for sysctlbyname
+#endif
 
 static long _maxdot_large_v0(const float *vv, const float *vec, unsigned long count, float *dotResult);
 static long _maxdot_large_v1(const float *vv, const float *vec, unsigned long count, float *dotResult);
@@ -847,6 +850,13 @@ long (*_mindot_large)(const float *vv, const float *vec, unsigned long count, fl
 
 static inline uint32_t btGetCpuCapabilities(void)
 {
+#ifdef BT_HAS_NEON_HPFP
+#if BT_HAS_NEON_HPFP == 1
+	return 0x2000;
+#else
+	return 0;
+#endif
+#else
 	static uint32_t capabilities = 0;
 	static bool testedCapabilities = false;
 
@@ -863,6 +873,7 @@ static inline uint32_t btGetCpuCapabilities(void)
 	}
 
 	return capabilities;
+#endif  // BT_HAS_NEON_HPFP
 }
 
 static long _maxdot_large_sel(const float *vv, const float *vec, unsigned long count, float *dotResult)
