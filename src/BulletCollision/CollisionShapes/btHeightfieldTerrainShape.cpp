@@ -15,6 +15,8 @@ subject to the following restrictions:
 
 #include "btHeightfieldTerrainShape.h"
 
+#include <algorithm>
+
 #include "LinearMath/btTransformUtil.h"
 
 btHeightfieldTerrainShape::btHeightfieldTerrainShape(
@@ -352,7 +354,13 @@ void btHeightfieldTerrainShape::processAllTriangles(btTriangleCallback* callback
 				getVertex(x, j, vertices[indices[0]]);
 				getVertex(x, j + 1, vertices[indices[1]]);
 				getVertex(x + 1, j + 1, vertices[indices[2]]);
-				callback->processTriangle(vertices, 2 * x, j);
+
+				// Skip triangle processing if the triangle is out-of-AABB.
+				btScalar minUp = std::min(vertices[0][m_upAxis], std::min(vertices[1][m_upAxis], vertices[2][m_upAxis]));
+				btScalar maxUp = std::max(vertices[0][m_upAxis], std::max(vertices[1][m_upAxis], vertices[2][m_upAxis]));
+
+				if (!(minUp > aabbMax[m_upAxis] || maxUp < aabbMin[m_upAxis]))
+					callback->processTriangle(vertices, 2 * x, j);
 			
 				// already set: getVertex(x, j, vertices[indices[0]])
 
@@ -360,15 +368,24 @@ void btHeightfieldTerrainShape::processAllTriangles(btTriangleCallback* callback
 				vertices[indices[1]] = vertices[indices[2]];
 
 				getVertex(x + 1, j, vertices[indices[2]]);
-				
-				callback->processTriangle(vertices, 2 * x+1, j);
+				minUp = std::min(minUp, vertices[indices[2]][m_upAxis]);
+				maxUp = std::max(maxUp, vertices[indices[2]][m_upAxis]);
+
+				if (!(minUp > aabbMax[m_upAxis] || maxUp < aabbMin[m_upAxis]))
+					callback->processTriangle(vertices, 2 * x+1, j);
 			}
 			else
 			{
 				getVertex(x, j, vertices[indices[0]]);
 				getVertex(x, j + 1, vertices[indices[1]]);
 				getVertex(x + 1, j, vertices[indices[2]]);
-				callback->processTriangle(vertices, 2 * x, j);
+
+				// Skip triangle processing if the triangle is out-of-AABB.
+				btScalar minUp = std::min(vertices[0][m_upAxis], std::min(vertices[1][m_upAxis], vertices[2][m_upAxis]));
+				btScalar maxUp = std::max(vertices[0][m_upAxis], std::max(vertices[1][m_upAxis], vertices[2][m_upAxis]));
+
+				if (!(minUp > aabbMax[m_upAxis] || maxUp < aabbMin[m_upAxis]))
+					callback->processTriangle(vertices, 2 * x, j);
 
 				// already set: getVertex(x, j + 1, vertices[indices[1]]);
 
@@ -376,7 +393,11 @@ void btHeightfieldTerrainShape::processAllTriangles(btTriangleCallback* callback
 				vertices[indices[0]] = vertices[indices[2]];
 
 				getVertex(x + 1, j + 1, vertices[indices[2]]);
-				callback->processTriangle(vertices, 2 * x+1, j);
+				minUp = std::min(minUp, vertices[indices[2]][m_upAxis]);
+				maxUp = std::max(maxUp, vertices[indices[2]][m_upAxis]);
+
+				if (!(minUp > aabbMax[m_upAxis] || maxUp < aabbMin[m_upAxis]))
+					callback->processTriangle(vertices, 2 * x+1, j);
 			}
 		}
 	}
